@@ -58,9 +58,16 @@ async function requestJson<T>(path: string, options: RequestOptions = {}): Promi
     let code: string | undefined
 
     try {
-      const data = (await response.json()) as { message?: string; code?: string }
-      if (data?.message) message = data.message
-      if (data?.code) code = data.code
+      const data = (await response.json()) as {
+        message?: string
+        code?: string
+        errorMessage?: string
+        businessCode?: string
+      }
+      if (data?.errorMessage) message = data.errorMessage
+      else if (data?.message) message = data.message
+      if (data?.businessCode) code = data.businessCode
+      else if (data?.code) code = data.code
     } catch {
       // ignore json parse errors
     }
