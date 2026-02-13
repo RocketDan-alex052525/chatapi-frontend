@@ -17,6 +17,16 @@ export type ChatCompletionResponse = {
   answer: string
 }
 
+export type ConversationSummary = {
+  title: string
+}
+
+export type ConversationListResponse = {
+  conversations: ConversationSummary[]
+  nextCursor: number | null
+  hasNext: boolean
+}
+
 export class ApiError extends Error {
   status: number
   code?: string
@@ -112,4 +122,14 @@ export function sendChatCompletion(conversationId: number, content: string) {
     method: 'POST',
     body: { conversationId, content },
   })
+}
+
+export function getConversations(size: number, cursor?: number | null) {
+  const params = new URLSearchParams()
+  params.set('size', String(size))
+  if (cursor !== undefined && cursor !== null) {
+    params.set('cursor', String(cursor))
+  }
+
+  return requestJson<ConversationListResponse>(`/api/conversations?${params.toString()}`)
 }

@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { createConversation, sendChatCompletion } from '../api'
+import { createConversation, getConversations, sendChatCompletion } from '../api'
 import { useAuth } from '../auth'
 import { formatError } from '../utils'
 
@@ -9,6 +9,10 @@ type Message = {
   id?: number
   role: 'user' | 'assistant'
   content: string
+}
+
+type ConversationItem = {
+  title: string
 }
 
 export default function ChatPage() {
@@ -26,13 +30,61 @@ export default function ChatPage() {
   const [chatError, setChatError] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
 
+  const [conversations, setConversations] = useState<ConversationItem[]>([])
+  const [listStatus, setListStatus] = useState('')
+  const [listError, setListError] = useState('')
+  const [listLoading, setListLoading] = useState(false)
+  const [nextCursor, setNextCursor] = useState<number | null>(null)
+  const [hasNext, setHasNext] = useState(false)
+
   const isLoggedIn = Boolean(auth)
   const canChat = isLoggedIn && conversationId !== null
+
+  const pageSize = 3
 
   const authSummary = useMemo(() => {
     if (!auth) return '미로그인'
     return `로그인됨 (userId=${auth.userId})`
   }, [auth])
+
+  useEffect(() => {
+    async function loadInitial() {
+      setListError('')
+      setListStatus('')
+      setListLoading(true)
+      try {
+        const result = await getConversations(pageSize)
+        setConversations(result.conversations)
+        setNextCursor(result.nextCursor)
+        setHasNext(result.hasNext)
+        setListStatus(`대화 ${result.conversations.length}건 불러옴`)
+      } catch (error) {
+        setListError(formatError(error))
+      } finally {
+        setListLoading(false)
+      }
+    }
+
+    loadInitial()
+  }, [])
+
+  async function handleLoadMore() {
+    if (!hasNext || listLoading) return
+    setListError('')
+    setListStatus('')
+    setListLoading(true)
+    try {
+      const result = await getConversations(pageSize, nextCursor)
+      setConversations((prev) => [...prev, ...result.conversations])
+      setNextCursor(result.nextCursor)
+      setHasNext(result.hasNext)
+      setListStatus(`대화 ${result.conversations.length}건 추가`)
+    } catch (error) {
+      setListError(formatError(error))
+    } finally {
+      setListLoading(false)
+    }
+  }
 
   async function handleCreateConversation() {
     setConversationError('')
@@ -44,6 +96,7 @@ export default function ChatPage() {
       setConversationStatus(`대화 생성 완료 (ID=${result.conversationId})`)
       setMessages([])
       setChatInput('')
+      setListStatus('새 대화를 생성했습니다. 필요하면 목록을 새로고침하세요.')
     } catch (error) {
       setConversationError(formatError(error))
     } finally {
@@ -93,6 +146,29 @@ export default function ChatPage() {
         {!isLoggedIn && (
           <p className="status-text error">로그인 후 대화를 생성할 수 있습니다.</p>
         )}
+
+        <div className="panel__section">
+          <div className="section__header">
+            <span>대화 목록</span>
+            {hasNext && (
+              <button className="secondary" onClick={handleLoadMore} disabled={listLoading}>
+                {listLoading ? '불러오는 중...' : '더보기'}
+              </button>
+            )}
+          </div>
+          <div className="conversation-list">
+            {conversations.length === 0 && !listLoading && (
+              <p className="conversation-empty">대화가 없습니다.</p>
+            )}
+            {conversations.map((item, index) => (
+              <div key={`${item.title}-${index}`} className="conversation-item">
+                <span className="conversation-title">{item.title}</span>
+              </div>
+            ))}
+          </div>
+          {listStatus && <p className="status-text ok">{listStatus}</p>}
+          {listError && <p className="status-text error">{listError}</p>}
+        </div>
 
         <label className="field">
           <span>대화 제목</span>
