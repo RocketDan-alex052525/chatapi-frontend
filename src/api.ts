@@ -18,6 +18,7 @@ export type ChatCompletionResponse = {
 }
 
 export type ConversationSummary = {
+  conversationId: number
   title: string
 }
 
@@ -124,12 +125,42 @@ export function sendChatCompletion(conversationId: number, content: string) {
   })
 }
 
-export function getConversations(size: number, cursor?: number | null) {
+export function getConversations(cursor?: number | null) {
   const params = new URLSearchParams()
-  params.set('size', String(size))
   if (cursor !== undefined && cursor !== null) {
     params.set('cursor', String(cursor))
   }
 
-  return requestJson<ConversationListResponse>(`/api/conversations?${params.toString()}`)
+  const query = params.toString()
+  return requestJson<ConversationListResponse>(
+    query ? `/api/conversations?${query}` : '/api/conversations',
+  )
+}
+
+export type MessageInfoResponse = {
+  role: string
+  content: string
+}
+
+export type MessageListResponse = {
+  messages: MessageInfoResponse[]
+  nextCursor: number | null
+  hasNext: boolean
+}
+
+export function getConversationMessages(
+  conversationId: number,
+  cursor?: number | null,
+) {
+  const params = new URLSearchParams()
+  if (cursor !== undefined && cursor !== null) {
+    params.set('cursor', String(cursor))
+  }
+
+  const query = params.toString()
+  return requestJson<MessageListResponse>(
+    query
+      ? `/api/conversations/${conversationId}/messages?${query}`
+      : `/api/conversations/${conversationId}/messages`,
+  )
 }

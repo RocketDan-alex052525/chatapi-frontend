@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { createConversation, getConversations, sendChatCompletion } from '../api'
+import {
+  createConversation,
+  getConversationMessages,
+  getConversations,
+  sendChatCompletion,
+} from '../api'
 import { useAuth } from '../auth'
 import { formatError } from '../utils'
 
@@ -12,14 +18,27 @@ type Message = {
 }
 
 type ConversationItem = {
+  conversationId: number
   title: string
+}
+
+function normalizeMessageRole(role: string): 'user' | 'assistant' {
+  const normalized = role.trim().toLowerCase()
+  if (normalized === 'assistant' || normalized === 'ai' || normalized === 'bot') {
+    return 'assistant'
+  }
+  if (normalized === 'user' || normalized === 'human') {
+    return 'user'
+  }
+  return 'assistant'
 }
 
 export default function ChatPage() {
   const { auth } = useAuth()
+  const navigate = useNavigate()
+  const { conversationId: conversationIdParam } = useParams()
 
   const [conversationTitle, setConversationTitle] = useState('새 대화')
-  const [conversationId, setConversationId] = useState<number | null>(null)
   const [conversationStatus, setConversationStatus] = useState('')
   const [conversationError, setConversationError] = useState('')
   const [conversationLoading, setConversationLoading] = useState(false)
@@ -37,10 +56,20 @@ export default function ChatPage() {
   const [nextCursor, setNextCursor] = useState<number | null>(null)
   const [hasNext, setHasNext] = useState(false)
 
-  const isLoggedIn = Boolean(auth)
-  const canChat = isLoggedIn && conversationId !== null
+  const [messageNextCursor, setMessageNextCursor] = useState<number | null>(null)
+  const [messageHasNext, setMessageHasNext] = useState(false)
+  const [messageLoading, setMessageLoading] = useState(false)
+  const [messageError, setMessageError] = useState('')
+  const [messageStatus, setMessageStatus] = useState('')
 
-  const pageSize = 3
+  const isLoggedIn = Boolean(auth)
+  const activeConversationId = useMemo(() => {
+    if (!conversationIdParam) return null
+    const parsed = Number(conversationIdParam)
+    if (!Number.isFinite(parsed)) return null
+    return parsed
+  }, [conversationIdParam])
+  const canChat = isLoggedIn && activeConversationId !== null
 
   const authSummary = useMemo(() => {
     if (!auth) return '미로그인'
@@ -53,7 +82,7 @@ export default function ChatPage() {
       setListStatus('')
       setListLoading(true)
       try {
-        const result = await getConversations(pageSize)
+        const result = await getConversations()
         setConversations(result.conversations)
         setNextCursor(result.nextCursor)
         setHasNext(result.hasNext)
@@ -68,13 +97,49 @@ export default function ChatPage() {
     loadInitial()
   }, [])
 
+  useEffect(() => {
+    async function loadMessages() {
+      if (!activeConversationId) {
+        setMessages([])
+        setMessageNextCursor(null)
+        setMessageHasNext(false)
+        setMessageError('')
+        setMessageStatus('')
+        return
+      }
+      setMessageError('')
+      setMessageStatus('')
+      setMessageLoading(true)
+      try {
+        const result = await getConversationMessages(activeConversationId)
+        const ordered = [...result.messages].reverse()
+        setMessages(
+          ordered.map((message, index) => ({
+            id: index,
+            role: normalizeMessageRole(message.role),
+            content: message.content,
+          })),
+        )
+        setMessageNextCursor(result.nextCursor)
+        setMessageHasNext(result.hasNext)
+        setMessageStatus(`메시지 ${result.messages.length}건 불러옴`)
+      } catch (error) {
+        setMessageError(formatError(error))
+      } finally {
+        setMessageLoading(false)
+      }
+    }
+
+    loadMessages()
+  }, [activeConversationId])
+
   async function handleLoadMore() {
     if (!hasNext || listLoading) return
     setListError('')
     setListStatus('')
     setListLoading(true)
     try {
-      const result = await getConversations(pageSize, nextCursor)
+      const result = await getConversations(nextCursor)
       setConversations((prev) => [...prev, ...result.conversations])
       setNextCursor(result.nextCursor)
       setHasNext(result.hasNext)
@@ -86,16 +151,42 @@ export default function ChatPage() {
     }
   }
 
+  async function handleLoadMoreMessages() {
+    if (!activeConversationId || !messageHasNext || messageLoading) return
+    setMessageError('')
+    setMessageStatus('')
+    setMessageLoading(true)
+    try {
+      const result = await getConversationMessages(activeConversationId, messageNextCursor)
+      const ordered = [...result.messages].reverse()
+      setMessages((prev) => [
+        ...ordered.map((message, index) => ({
+          id: prev.length + index,
+          role: normalizeMessageRole(message.role),
+          content: message.content,
+        })),
+        ...prev,
+      ])
+      setMessageNextCursor(result.nextCursor)
+      setMessageHasNext(result.hasNext)
+      setMessageStatus(`메시지 ${result.messages.length}건 추가`)
+    } catch (error) {
+      setMessageError(formatError(error))
+    } finally {
+      setMessageLoading(false)
+    }
+  }
+
   async function handleCreateConversation() {
     setConversationError('')
     setConversationStatus('')
     setConversationLoading(true)
     try {
       const result = await createConversation(conversationTitle.trim() || '새 대화')
-      setConversationId(result.conversationId)
       setConversationStatus(`대화 생성 완료 (ID=${result.conversationId})`)
       setMessages([])
       setChatInput('')
+      navigate(`/chat/${result.conversationId}`)
       setListStatus('새 대화를 생성했습니다. 필요하면 목록을 새로고침하세요.')
     } catch (error) {
       setConversationError(formatError(error))
@@ -105,7 +196,7 @@ export default function ChatPage() {
   }
 
   async function handleSendChat() {
-    if (!conversationId) return
+    if (!activeConversationId) return
     const content = chatInput.trim()
     if (!content) return
 
@@ -118,7 +209,7 @@ export default function ChatPage() {
     setChatInput('')
 
     try {
-      const result = await sendChatCompletion(conversationId, content)
+      const result = await sendChatCompletion(activeConversationId, content)
       const assistantMessage: Message = {
         id: result.messageId,
         role: 'assistant',
@@ -161,9 +252,15 @@ export default function ChatPage() {
               <p className="conversation-empty">대화가 없습니다.</p>
             )}
             {conversations.map((item, index) => (
-              <div key={`${item.title}-${index}`} className="conversation-item">
+              <button
+                key={`${item.conversationId}-${index}`}
+                className={`conversation-item${
+                  activeConversationId === item.conversationId ? ' active' : ''
+                }`}
+                onClick={() => navigate(`/chat/${item.conversationId}`)}
+              >
                 <span className="conversation-title">{item.title}</span>
-              </div>
+              </button>
             ))}
           </div>
           {listStatus && <p className="status-text ok">{listStatus}</p>}
@@ -182,32 +279,47 @@ export default function ChatPage() {
           <button disabled={!isLoggedIn || conversationLoading} onClick={handleCreateConversation}>
             {conversationLoading ? '생성 중...' : '대화 생성'}
           </button>
-          {conversationId && <span className="badge">현재 대화 ID: {conversationId}</span>}
+          {activeConversationId && (
+            <span className="badge">현재 대화 ID: {activeConversationId}</span>
+          )}
         </div>
         {conversationStatus && <p className="status-text ok">{conversationStatus}</p>}
         {conversationError && <p className="status-text error">{conversationError}</p>}
 
         <div className="chat">
           <div className="chat__history">
-            {messages.length === 0 && (
+            {!activeConversationId && (
+              <p className="chat__empty">대화를 선택하면 메시지를 볼 수 있습니다.</p>
+            )}
+            {activeConversationId && messages.length === 0 && (
               <p className="chat__empty">아직 메시지가 없습니다. 질문을 입력해 주세요.</p>
             )}
-            {messages.map((message, index) => (
-              <div
-                key={`${message.role}-${index}`}
-                className={`chat__bubble chat__bubble--${message.role}`}
+            {activeConversationId && messageHasNext && (
+              <button
+                className="secondary chat__more"
+                onClick={handleLoadMoreMessages}
+                disabled={messageLoading}
               >
-                {message.role === 'assistant' ? (
-                  <div className="markdown">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {message.content}
-                    </ReactMarkdown>
-                  </div>
-                ) : (
-                  <p>{message.content}</p>
-                )}
-              </div>
-            ))}
+                {messageLoading ? '불러오는 중...' : '메시지 더보기'}
+              </button>
+            )}
+            {activeConversationId &&
+              messages.map((message, index) => (
+                <div
+                  key={`${message.role}-${index}`}
+                  className={`chat__bubble chat__bubble--${message.role}`}
+                >
+                  {message.role === 'assistant' ? (
+                    <div className="markdown">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
+                  ) : (
+                    <p>{message.content}</p>
+                  )}
+                </div>
+              ))}
           </div>
           <div className="chat__composer">
             <textarea
@@ -225,6 +337,8 @@ export default function ChatPage() {
               {chatLoading ? '전송 중...' : '전송'}
             </button>
           </div>
+          {messageStatus && <p className="status-text ok">{messageStatus}</p>}
+          {messageError && <p className="status-text error">{messageError}</p>}
           {chatStatus && <p className="status-text ok">{chatStatus}</p>}
           {chatError && <p className="status-text error">{chatError}</p>}
           {/* <p className="app__note">

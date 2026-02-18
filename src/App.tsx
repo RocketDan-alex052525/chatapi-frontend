@@ -35,6 +35,7 @@ export default function App() {
           <Route path="/" element={<AuthPage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/chat" element={<ChatPage />} />
+          <Route path="/chat/:conversationId" element={<ChatPage />} />
         </Routes>
       </div>
     </AuthProvider>

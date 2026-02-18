@@ -224,10 +224,23 @@ button.secondary {
 }
 
 .conversation-item {
+  border: none;
+  text-align: left;
   padding: 12px 14px;
   border-radius: 12px;
   background: #ffffff;
   box-shadow: 0 6px 14px rgba(25, 20, 16, 0.06);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.conversation-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(25, 20, 16, 0.1);
+}
+
+.conversation-item.active {
+  background: #ffefe3;
 }
 
 .conversation-title {
@@ -254,6 +267,10 @@ button.secondary {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.chat__more {
+  align-self: center;
 }
 
 .chat__empty {
