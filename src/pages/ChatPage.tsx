@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import {
   createConversation,
+  deleteConversation,
   getConversationMessages,
   getConversations,
   sendChatCompletion,
@@ -61,6 +62,8 @@ export default function ChatPage() {
   const [messageLoading, setMessageLoading] = useState(false)
   const [messageError, setMessageError] = useState('')
   const [messageStatus, setMessageStatus] = useState('')
+  const [deleteError, setDeleteError] = useState('')
+  const [deleteLoadingId, setDeleteLoadingId] = useState<number | null>(null)
 
   const isLoggedIn = Boolean(auth)
   const activeConversationId = useMemo(() => {
@@ -177,6 +180,27 @@ export default function ChatPage() {
     }
   }
 
+  async function handleDeleteConversation(targetId: number) {
+    if (deleteLoadingId !== null) return
+    setDeleteError('')
+    setDeleteLoadingId(targetId)
+    try {
+      await deleteConversation(targetId)
+      setConversations((prev) => prev.filter((item) => item.conversationId !== targetId))
+      setListStatus('대화를 삭제했습니다.')
+      if (activeConversationId === targetId) {
+        navigate('/chat')
+        setMessages([])
+        setMessageHasNext(false)
+        setMessageNextCursor(null)
+      }
+    } catch (error) {
+      setDeleteError(formatError(error))
+    } finally {
+      setDeleteLoadingId(null)
+    }
+  }
+
   async function handleCreateConversation() {
     setConversationError('')
     setConversationStatus('')
@@ -252,19 +276,31 @@ export default function ChatPage() {
               <p className="conversation-empty">대화가 없습니다.</p>
             )}
             {conversations.map((item, index) => (
-              <button
+              <div
                 key={`${item.conversationId}-${index}`}
                 className={`conversation-item${
                   activeConversationId === item.conversationId ? ' active' : ''
                 }`}
-                onClick={() => navigate(`/chat/${item.conversationId}`)}
               >
-                <span className="conversation-title">{item.title}</span>
-              </button>
+                <button
+                  className="conversation-link"
+                  onClick={() => navigate(`/chat/${item.conversationId}`)}
+                >
+                  <span className="conversation-title">{item.title}</span>
+                </button>
+                <button
+                  className="secondary conversation-delete"
+                  onClick={() => handleDeleteConversation(item.conversationId)}
+                  disabled={deleteLoadingId === item.conversationId}
+                >
+                  {deleteLoadingId === item.conversationId ? '삭제 중...' : '삭제'}
+                </button>
+              </div>
             ))}
           </div>
           {listStatus && <p className="status-text ok">{listStatus}</p>}
           {listError && <p className="status-text error">{listError}</p>}
+          {deleteError && <p className="status-text error">{deleteError}</p>}
         </div>
 
         <label className="field">

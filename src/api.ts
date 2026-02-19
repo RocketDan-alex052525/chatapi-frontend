@@ -164,3 +164,9 @@ export function getConversationMessages(
       : `/api/conversations/${conversationId}/messages`,
   )
 }
+
+export function deleteConversation(conversationId: number) {
+  return requestJson<void>(`/api/conversations/${conversationId}`, {
+    method: 'DELETE',
+  })
+}
