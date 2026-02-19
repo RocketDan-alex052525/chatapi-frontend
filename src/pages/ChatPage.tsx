@@ -49,6 +49,7 @@ export default function ChatPage() {
   const [chatStatus, setChatStatus] = useState('')
   const [chatError, setChatError] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
+  const [streamingEnabled, setStreamingEnabled] = useState(false)
 
   const [conversations, setConversations] = useState<ConversationItem[]>([])
   const [listStatus, setListStatus] = useState('')
@@ -233,14 +234,77 @@ export default function ChatPage() {
     setChatInput('')
 
     try {
-      const result = await sendChatCompletion(activeConversationId, content)
-      const assistantMessage: Message = {
-        id: result.messageId,
-        role: 'assistant',
-        content: result.answer,
+      if (!streamingEnabled) {
+        const result = await sendChatCompletion(activeConversationId, content)
+        const assistantMessage: Message = {
+          id: result.messageId,
+          role: 'assistant',
+          content: result.answer,
+        }
+        setMessages((prev) => [...prev, assistantMessage])
+        setChatStatus(`응답 수신 (messageId=${result.messageId})`)
+      } else {
+        const streamMessageId = Date.now()
+        setMessages((prev) => [
+          ...prev,
+          { id: streamMessageId, role: 'assistant', content: '' },
+        ])
+
+        const response = await fetch('/api/chat/completions/stream', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ conversationId: activeConversationId, content }),
+          credentials: 'include',
+        })
+
+        if (!response.ok || !response.body) {
+          throw new Error(response.statusText || 'Stream request failed')
+        }
+
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+        let doneStreaming = false
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() ?? ''
+
+          for (const rawLine of lines) {
+            const line = rawLine.replace(/\r$/, '')
+            if (!line.startsWith('data:')) continue
+            const data = line.slice(5).trimStart()
+            if (data === '[DONE]') {
+              doneStreaming = true
+              break
+            }
+            try {
+              const parsed = JSON.parse(data) as { content?: string }
+              if (parsed.content) {
+                setMessages((prev) =>
+                  prev.map((message) =>
+                    message.id === streamMessageId
+                      ? { ...message, content: message.content + parsed.content }
+                      : message,
+                  ),
+                )
+              }
+            } catch {
+              // ignore malformed chunks
+            }
+          }
+
+          if (doneStreaming) break
+        }
+
+        setChatStatus('스트리밍 응답 완료')
       }
-      setMessages((prev) => [...prev, assistantMessage])
-      setChatStatus(`응답 수신 (messageId=${result.messageId})`)
     } catch (error) {
       const errorMessage = formatError(error)
       setChatError(errorMessage)
@@ -358,6 +422,14 @@ export default function ChatPage() {
               ))}
           </div>
           <div className="chat__composer">
+            <label className="chat__toggle">
+              <input
+                type="checkbox"
+                checked={streamingEnabled}
+                onChange={(event) => setStreamingEnabled(event.target.checked)}
+              />
+              <span>스트리밍 모드</span>
+            </label>
             <textarea
               rows={3}
               placeholder={

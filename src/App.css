@@ -359,9 +359,22 @@ button.secondary {
 
 .chat__composer {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto 1fr auto;
   gap: 12px;
   align-items: center;
+}
+
+.chat__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #3b2a1f;
+}
+
+.chat__toggle input {
+  width: 18px;
+  height: 18px;
 }
 
 .chat__composer textarea {
