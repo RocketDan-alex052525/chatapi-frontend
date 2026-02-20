@@ -12,7 +12,7 @@ export default function AuthPage() {
 
   const authSummary = useMemo(() => {
     if (!auth) return '미로그인'
-    return `로그인됨 (userId=${auth.userId})`
+    return '로그인됨'
   }, [auth])
 
   async function handleRegister() {
@@ -21,7 +21,7 @@ export default function AuthPage() {
     setAuthLoading(true)
     try {
       const result = await registerApiKey(apiKey.trim())
-      setAuthStatus(`API 키 등록 완료 (userId=${result.userId})`)
+      setAuthStatus('API 키 등록 완료')
       setApiKey('')
     } catch (error) {
       setAuthError(formatError(error))
@@ -37,7 +37,7 @@ export default function AuthPage() {
     try {
       const result = await login(apiKey.trim())
       setAuth(result)
-      setAuthStatus(`로그인 완료 (userId=${result.userId})`)
+      setAuthStatus('로그인 완료')
       setApiKey('')
     } catch (error) {
       setAuthError(formatError(error))

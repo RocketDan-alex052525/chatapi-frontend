@@ -77,7 +77,7 @@ export default function ChatPage() {
 
   const authSummary = useMemo(() => {
     if (!auth) return '미로그인'
-    return `로그인됨 (userId=${auth.userId})`
+    return '로그인됨'
   }, [auth])
 
   useEffect(() => {
@@ -242,7 +242,7 @@ export default function ChatPage() {
           content: result.answer,
         }
         setMessages((prev) => [...prev, assistantMessage])
-        setChatStatus(`응답 수신 (messageId=${result.messageId})`)
+        setChatStatus('응답 수신')
       } else {
         const streamMessageId = Date.now()
         setMessages((prev) => [
@@ -379,9 +379,6 @@ export default function ChatPage() {
           <button disabled={!isLoggedIn || conversationLoading} onClick={handleCreateConversation}>
             {conversationLoading ? '생성 중...' : '대화 생성'}
           </button>
-          {activeConversationId && (
-            <span className="badge">현재 대화 ID: {activeConversationId}</span>
-          )}
         </div>
         {conversationStatus && <p className="status-text ok">{conversationStatus}</p>}
         {conversationError && <p className="status-text error">{conversationError}</p>}
