@@ -53,7 +53,7 @@ export default function AuthPage() {
           <span>OpenAI API 키</span>
           <input
             type="password"
-            placeholder="sk-..."
+            placeholder="api key"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
           />
