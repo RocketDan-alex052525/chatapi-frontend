@@ -1,6 +1,6 @@
-import { ApiError } from './api'
+import { ApiError } from '../api/client'
 
-export function formatError(error: unknown) {
+export function formatError(error: unknown): string {
   if (error instanceof ApiError) {
     const code = error.code ? ` (${error.code})` : ''
     return `${error.message}${code}`

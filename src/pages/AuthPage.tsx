@@ -1,48 +1,45 @@
-import { useMemo, useState } from 'react'
-import { login, registerApiKey } from '../api'
-import { useAuth } from '../auth'
-import { formatError } from '../utils'
+import { useState } from 'react'
+import { login, registerApiKey } from '../domains/auth'
+import { useAuth } from '../domains/auth'
+import { formatError } from '../shared/utils/formatError'
 
 export default function AuthPage() {
   const { auth, setAuth } = useAuth()
   const [apiKey, setApiKey] = useState('')
-  const [authStatus, setAuthStatus] = useState<string>('')
-  const [authError, setAuthError] = useState<string>('')
-  const [authLoading, setAuthLoading] = useState(false)
+  const [status, setStatus] = useState('')
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
-  const authSummary = useMemo(() => {
-    if (!auth) return '미로그인'
-    return '로그인됨'
-  }, [auth])
+  const authSummary = auth ? '로그인됨' : '미로그인'
 
   async function handleRegister() {
-    setAuthError('')
-    setAuthStatus('')
-    setAuthLoading(true)
+    setError('')
+    setStatus('')
+    setIsLoading(true)
     try {
-      const result = await registerApiKey(apiKey.trim())
-      setAuthStatus('API 키 등록 완료')
+      await registerApiKey(apiKey.trim())
+      setStatus('API 키 등록 완료')
       setApiKey('')
-    } catch (error) {
-      setAuthError(formatError(error))
+    } catch (err) {
+      setError(formatError(err))
     } finally {
-      setAuthLoading(false)
+      setIsLoading(false)
     }
   }
 
   async function handleLogin() {
-    setAuthError('')
-    setAuthStatus('')
-    setAuthLoading(true)
+    setError('')
+    setStatus('')
+    setIsLoading(true)
     try {
       const result = await login(apiKey.trim())
       setAuth(result)
-      setAuthStatus('로그인 완료')
+      setStatus('로그인 완료')
       setApiKey('')
-    } catch (error) {
-      setAuthError(formatError(error))
+    } catch (err) {
+      setError(formatError(err))
     } finally {
-      setAuthLoading(false)
+      setIsLoading(false)
     }
   }
 
@@ -57,27 +54,23 @@ export default function AuthPage() {
             type="password"
             placeholder="sk-..."
             value={apiKey}
-            onChange={(event) => setApiKey(event.target.value)}
+            onChange={(e) => setApiKey(e.target.value)}
           />
         </label>
         <div className="actions">
-          <button disabled={authLoading || !apiKey.trim()} onClick={handleRegister}>
-            {authLoading ? '처리 중...' : 'API 키 등록'}
+          <button disabled={isLoading || !apiKey.trim()} onClick={handleRegister}>
+            {isLoading ? '처리 중...' : 'API 키 등록'}
           </button>
           <button
             className="secondary"
-            disabled={authLoading || !apiKey.trim()}
+            disabled={isLoading || !apiKey.trim()}
             onClick={handleLogin}
           >
-            {authLoading ? '처리 중...' : '로그인'}
+            {isLoading ? '처리 중...' : '로그인'}
           </button>
         </div>
-        {authStatus && <p className="status-text ok">{authStatus}</p>}
-        {authError && <p className="status-text error">{authError}</p>}
-        {/* <p className="app__note">
-          인증은 <code>ACCESS_TOKEN_COOKIE</code> 쿠키 기반이며 모든 <code>/api/**</code> 요청은
-          <code>credentials: include</code>로 호출됩니다.
-        </p> */}
+        {status && <p className="status-text ok">{status}</p>}
+        {error && <p className="status-text error">{error}</p>}
       </div>
     </section>
   )

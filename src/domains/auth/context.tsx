@@ -1,10 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
-
-export type AuthInfo = {
-  userId: number
-  accessToken: string
-  expiresInSeconds: number
-}
+import type { AuthInfo } from './types'
 
 type AuthContextValue = {
   auth: AuthInfo | null
@@ -68,10 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({
-          auth,
-          expiresAt,
-        } satisfies StoredAuth),
+        JSON.stringify({ auth, expiresAt } satisfies StoredAuth),
       )
     } catch {
       // ignore storage errors

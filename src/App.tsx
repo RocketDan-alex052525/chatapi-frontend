@@ -1,5 +1,5 @@
 import { NavLink, Route, Routes } from 'react-router-dom'
-import { AuthProvider } from './auth'
+import { AuthProvider } from './domains/auth'
 import AuthPage from './pages/AuthPage'
 import ChatPage from './pages/ChatPage'
 import './App.css'
@@ -12,9 +12,7 @@ export default function App() {
           <div>
             <p className="app__eyebrow">Rocketdan</p>
             <h1>ChatAPI</h1>
-            <p className="app__subtext">
-              챗봇 어시스턴트
-            </p>
+            <p className="app__subtext">챗봇 어시스턴트</p>
           </div>
           <div className="app__status">
             <nav className="app__nav">
@@ -25,9 +23,6 @@ export default function App() {
                 대화
               </NavLink>
             </nav>
-            {/* <p className="app__note">
-              기본 경로는 <code>/auth</code>입니다.
-            </p> */}
           </div>
         </header>
 
