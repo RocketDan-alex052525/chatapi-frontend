@@ -32,11 +32,6 @@ export default function ConversationList({
     <div className="panel__section">
       <div className="section__header">
         <span>대화 목록</span>
-        {hasNext && (
-          <button className="secondary" onClick={onLoadMore} disabled={isLoading}>
-            {isLoading ? '불러오는 중...' : '더보기'}
-          </button>
-        )}
       </div>
       <div className="conversation-list">
         {conversations.length === 0 && !isLoading && (
@@ -62,6 +57,11 @@ export default function ConversationList({
             </button>
           </div>
         ))}
+        {hasNext && (
+          <button className="secondary" onClick={onLoadMore} disabled={isLoading}>
+            {isLoading ? '불러오는 중...' : '더보기'}
+          </button>
+        )}
       </div>
       {status && <p className="status-text ok">{status}</p>}
       {error && <p className="status-text error">{error}</p>}

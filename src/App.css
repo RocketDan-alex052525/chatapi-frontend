@@ -395,6 +395,60 @@ button.secondary {
   box-shadow: 0 0 0 3px rgba(216, 106, 63, 0.15);
 }
 
+/* Chat two-column layout */
+.chat-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  height: calc(100vh - 260px);
+  min-height: 520px;
+  overflow: hidden;
+}
+
+.chat-layout__sidebar {
+  padding: 20px;
+  border-right: 1px solid #f1e4d7;
+  background: #fff8f1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.chat-layout__sidebar .panel__section {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.chat-layout__main {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-layout__main .chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+.chat-layout__main .chat__history {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.sidebar__create {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #f1e4d7;
+}
+
 @media (max-width: 720px) {
   .app {
     padding: 24px 16px 60px;
@@ -402,6 +456,21 @@ button.secondary {
 
   .app__header {
     padding: 24px;
+  }
+
+  .chat-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .chat-layout__sidebar {
+    border-right: none;
+    border-bottom: 1px solid #f1e4d7;
+    max-height: 40vh;
+  }
+
+  .chat-layout__main .chat__history {
+    min-height: 280px;
   }
 
   .chat__composer {

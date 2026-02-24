@@ -16,7 +16,6 @@ type UseConversationListResult = {
   handleDelete: (conversationId: number, activeConversationId: number | null) => Promise<void>
   handleCreate: (title: string) => Promise<void>
   createLoading: boolean
-  createStatus: string
   createError: string
 }
 
@@ -34,20 +33,17 @@ export function useConversationList(): UseConversationListResult {
   const [deleteLoadingId, setDeleteLoadingId] = useState<number | null>(null)
 
   const [createLoading, setCreateLoading] = useState(false)
-  const [createStatus, setCreateStatus] = useState('')
   const [createError, setCreateError] = useState('')
 
   useEffect(() => {
     async function loadInitial() {
       setError('')
-      setStatus('')
       setIsLoading(true)
       try {
         const result = await getConversations()
         setConversations(result.conversations)
         setNextCursor(result.nextCursor)
         setHasNext(result.hasNext)
-        setStatus(`대화 ${result.conversations.length}건 불러옴`)
       } catch (err) {
         setError(formatError(err))
       } finally {
@@ -60,14 +56,12 @@ export function useConversationList(): UseConversationListResult {
   async function loadMore() {
     if (!hasNext || isLoading) return
     setError('')
-    setStatus('')
     setIsLoading(true)
     try {
       const result = await getConversations(nextCursor)
       setConversations((prev) => [...prev, ...result.conversations])
       setNextCursor(result.nextCursor)
       setHasNext(result.hasNext)
-      setStatus(`대화 ${result.conversations.length}건 추가`)
     } catch (err) {
       setError(formatError(err))
     } finally {
@@ -95,12 +89,9 @@ export function useConversationList(): UseConversationListResult {
 
   async function handleCreate(title: string) {
     setCreateError('')
-    setCreateStatus('')
     setCreateLoading(true)
     try {
       const result = await createConversation(title.trim() || '새 대화')
-      setCreateStatus(`대화 생성 완료 (ID=${result.conversationId})`)
-      setStatus('새 대화를 생성했습니다. 필요하면 목록을 새로고침하세요.')
       navigate(`/chat/${result.conversationId}`)
     } catch (err) {
       setCreateError(formatError(err))
@@ -121,7 +112,6 @@ export function useConversationList(): UseConversationListResult {
     handleDelete,
     handleCreate,
     createLoading,
-    createStatus,
     createError,
   }
 }

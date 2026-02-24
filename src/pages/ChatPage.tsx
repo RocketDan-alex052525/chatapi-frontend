@@ -29,73 +29,78 @@ export default function ChatPage() {
   return (
     <section className="panel">
       <div className="panel__title">채팅</div>
-      <div className="panel__body">
-        <p className="panel__summary">현재 상태: {isLoggedIn ? '로그인됨' : '미로그인'}</p>
-        {!isLoggedIn && (
-          <p className="status-text error">로그인 후 대화를 생성할 수 있습니다.</p>
-        )}
+      <div className="chat-layout">
 
-        <ConversationList
-          conversations={conversationList.conversations}
-          activeConversationId={activeConversationId}
-          hasNext={conversationList.hasNext}
-          isLoading={conversationList.isLoading}
-          deleteLoadingId={conversationList.deleteLoadingId}
-          status={conversationList.status}
-          error={conversationList.error}
-          deleteError={conversationList.deleteError}
-          onLoadMore={conversationList.loadMore}
-          onDelete={(id) => conversationList.handleDelete(id, activeConversationId)}
-        />
+        <aside className="chat-layout__sidebar">
+          <p className="panel__summary">현재 상태: {isLoggedIn ? '로그인됨' : '미로그인'}</p>
+          {!isLoggedIn && (
+            <p className="status-text error">로그인 후 대화를 생성할 수 있습니다.</p>
+          )}
 
-        <label className="field">
-          <span>대화 제목</span>
-          <input
-            type="text"
-            value={conversationTitle}
-            onChange={(e) => setConversationTitle(e.target.value)}
-          />
-        </label>
-        <div className="actions">
-          <button
-            disabled={!isLoggedIn || conversationList.createLoading}
-            onClick={() => conversationList.handleCreate(conversationTitle)}
-          >
-            {conversationList.createLoading ? '생성 중...' : '대화 생성'}
-          </button>
-        </div>
-        {conversationList.createStatus && (
-          <p className="status-text ok">{conversationList.createStatus}</p>
-        )}
-        {conversationList.createError && (
-          <p className="status-text error">{conversationList.createError}</p>
-        )}
-
-        <div className="chat">
-          <MessageList
+          <ConversationList
+            conversations={conversationList.conversations}
             activeConversationId={activeConversationId}
-            messages={messageList.messages}
-            hasNext={messageList.hasNext}
-            isLoading={messageList.isLoading}
-            onLoadMore={messageList.loadMore}
+            hasNext={conversationList.hasNext}
+            isLoading={conversationList.isLoading}
+            deleteLoadingId={conversationList.deleteLoadingId}
+            status={conversationList.status}
+            error={conversationList.error}
+            deleteError={conversationList.deleteError}
+            onLoadMore={conversationList.loadMore}
+            onDelete={(id) => conversationList.handleDelete(id, activeConversationId)}
           />
-          <ChatComposer
-            value={chat.chatInput}
-            onChange={chat.setChatInput}
-            onSend={() =>
-              activeConversationId !== null &&
-              chat.sendMessage(activeConversationId, messageList.setMessages)
-            }
-            isLoading={chat.isLoading}
-            canChat={canChat}
-            streamingEnabled={chat.streamingEnabled}
-            onStreamingToggle={chat.setStreamingEnabled}
-            status={chat.status}
-            error={chat.error}
-          />
-          {messageList.status && <p className="status-text ok">{messageList.status}</p>}
-          {messageList.error && <p className="status-text error">{messageList.error}</p>}
-        </div>
+
+          <div className="sidebar__create">
+            <label className="field">
+              <span>대화 제목</span>
+              <input
+                type="text"
+                value={conversationTitle}
+                onChange={(e) => setConversationTitle(e.target.value)}
+              />
+            </label>
+            <div className="actions">
+              <button
+                disabled={!isLoggedIn || conversationList.createLoading}
+                onClick={() => conversationList.handleCreate(conversationTitle)}
+              >
+                {conversationList.createLoading ? '생성 중...' : '대화 생성'}
+              </button>
+            </div>
+            {conversationList.createError && (
+              <p className="status-text error">{conversationList.createError}</p>
+            )}
+          </div>
+        </aside>
+
+        <main className="chat-layout__main">
+          <div className="chat">
+            <MessageList
+              activeConversationId={activeConversationId}
+              messages={messageList.messages}
+              hasNext={messageList.hasNext}
+              isLoading={messageList.isLoading}
+              onLoadMore={messageList.loadMore}
+            />
+            <ChatComposer
+              value={chat.chatInput}
+              onChange={chat.setChatInput}
+              onSend={() =>
+                activeConversationId !== null &&
+                chat.sendMessage(activeConversationId, messageList.setMessages)
+              }
+              isLoading={chat.isLoading}
+              canChat={canChat}
+              streamingEnabled={chat.streamingEnabled}
+              onStreamingToggle={chat.setStreamingEnabled}
+              status={chat.status}
+              error={chat.error}
+            />
+            {messageList.status && <p className="status-text ok">{messageList.status}</p>}
+            {messageList.error && <p className="status-text error">{messageList.error}</p>}
+          </div>
+        </main>
+
       </div>
     </section>
   )
