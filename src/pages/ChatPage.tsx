@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import ChatComposer from '../components/ChatComposer/ChatComposer'
 import ConversationList from '../components/ConversationList/ConversationList'
+import CreateConversationModal from '../components/CreateConversationModal/CreateConversationModal'
 import MessageList from '../components/MessageList/MessageList'
 import { useAuth } from '../domains/auth'
 import { useChat } from '../domains/chat'
@@ -24,7 +25,17 @@ export default function ChatPage() {
   const messageList = useConversationMessages(activeConversationId)
   const chat = useChat()
 
-  const [conversationTitle, setConversationTitle] = useState('새 대화')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  // 대화 선택 or 새 메시지 append 시 최하단으로 스크롤
+  // load more(prepend)는 마지막 메시지가 바뀌지 않으므로 스크롤 미발생
+  const lastMsg = messageList.messages[messageList.messages.length - 1]
+  const scrollToBottomKey = `${activeConversationId ?? 'none'}-${lastMsg?.id ?? lastMsg?.content.slice(0, 8)}`
+
+  async function handleCreateConfirm(title: string) {
+    const success = await conversationList.handleCreate(title)
+    if (success) setIsModalOpen(false)
+  }
 
   return (
     <section className="panel">
@@ -51,25 +62,12 @@ export default function ChatPage() {
           />
 
           <div className="sidebar__create">
-            <label className="field">
-              <span>대화 제목</span>
-              <input
-                type="text"
-                value={conversationTitle}
-                onChange={(e) => setConversationTitle(e.target.value)}
-              />
-            </label>
-            <div className="actions">
-              <button
-                disabled={!isLoggedIn || conversationList.createLoading}
-                onClick={() => conversationList.handleCreate(conversationTitle)}
-              >
-                {conversationList.createLoading ? '생성 중...' : '대화 생성'}
-              </button>
-            </div>
-            {conversationList.createError && (
-              <p className="status-text error">{conversationList.createError}</p>
-            )}
+            <button
+              disabled={!isLoggedIn}
+              onClick={() => setIsModalOpen(true)}
+            >
+              새 대화
+            </button>
           </div>
         </aside>
 
@@ -80,6 +78,7 @@ export default function ChatPage() {
               messages={messageList.messages}
               hasNext={messageList.hasNext}
               isLoading={messageList.isLoading}
+              scrollToBottomKey={scrollToBottomKey}
               onLoadMore={messageList.loadMore}
             />
             <ChatComposer
@@ -102,6 +101,14 @@ export default function ChatPage() {
         </main>
 
       </div>
+
+      <CreateConversationModal
+        isOpen={isModalOpen}
+        isLoading={conversationList.createLoading}
+        error={conversationList.createError}
+        onConfirm={handleCreateConfirm}
+        onClose={() => setIsModalOpen(false)}
+      />
     </section>
   )
 }

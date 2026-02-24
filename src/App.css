@@ -442,11 +442,50 @@ button.secondary {
 }
 
 .sidebar__create {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
   padding-top: 16px;
   border-top: 1px solid #f1e4d7;
+}
+
+/* Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 28px;
+  width: 400px;
+  max-width: 90vw;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1b1a17;
+  margin: 0;
+}
+
+.modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
 }
 
 @media (max-width: 720px) {

@@ -14,7 +14,7 @@ type UseConversationListResult = {
   deleteLoadingId: number | null
   loadMore: () => Promise<void>
   handleDelete: (conversationId: number, activeConversationId: number | null) => Promise<void>
-  handleCreate: (title: string) => Promise<void>
+  handleCreate: (title: string) => Promise<boolean>
   createLoading: boolean
   createError: string
 }
@@ -87,14 +87,16 @@ export function useConversationList(): UseConversationListResult {
     }
   }
 
-  async function handleCreate(title: string) {
+  async function handleCreate(title: string): Promise<boolean> {
     setCreateError('')
     setCreateLoading(true)
     try {
       const result = await createConversation(title.trim() || '새 대화')
       navigate(`/chat/${result.conversationId}`)
+      return true
     } catch (err) {
       setCreateError(formatError(err))
+      return false
     } finally {
       setCreateLoading(false)
     }

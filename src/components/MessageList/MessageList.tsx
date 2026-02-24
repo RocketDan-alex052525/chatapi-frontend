@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { Message } from '../../domains/conversation/types'
@@ -7,6 +8,7 @@ type Props = {
   messages: Message[]
   hasNext: boolean
   isLoading: boolean
+  scrollToBottomKey: string
   onLoadMore: () => void
 }
 
@@ -15,8 +17,15 @@ export default function MessageList({
   messages,
   hasNext,
   isLoading,
+  scrollToBottomKey,
   onLoadMore,
 }: Props) {
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView()
+  }, [scrollToBottomKey])
+
   return (
     <div className="chat__history">
       {!activeConversationId && (
@@ -45,6 +54,7 @@ export default function MessageList({
             )}
           </div>
         ))}
+      <div ref={bottomRef} />
     </div>
   )
 }
