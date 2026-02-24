@@ -15,7 +15,6 @@ type UseConversationMessagesResult = {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>
   hasNext: boolean
   isLoading: boolean
-  status: string
   error: string
   loadMore: () => Promise<void>
 }
@@ -27,7 +26,6 @@ export function useConversationMessages(
   const [hasNext, setHasNext] = useState(false)
   const [nextCursor, setNextCursor] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [status, setStatus] = useState('')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -36,13 +34,11 @@ export function useConversationMessages(
       setNextCursor(null)
       setHasNext(false)
       setError('')
-      setStatus('')
       return
     }
 
     async function loadMessages() {
       setError('')
-      setStatus('')
       setIsLoading(true)
       try {
         const result = await getConversationMessages(activeConversationId!)
@@ -56,7 +52,6 @@ export function useConversationMessages(
         )
         setNextCursor(result.nextCursor)
         setHasNext(result.hasNext)
-        setStatus(`메시지 ${result.messages.length}건 불러옴`)
       } catch (err) {
         setError(formatError(err))
       } finally {
@@ -70,7 +65,6 @@ export function useConversationMessages(
   async function loadMore() {
     if (!activeConversationId || !hasNext || isLoading) return
     setError('')
-    setStatus('')
     setIsLoading(true)
     try {
       const result = await getConversationMessages(activeConversationId, nextCursor)
@@ -85,7 +79,6 @@ export function useConversationMessages(
       ])
       setNextCursor(result.nextCursor)
       setHasNext(result.hasNext)
-      setStatus(`메시지 ${result.messages.length}건 추가`)
     } catch (err) {
       setError(formatError(err))
     } finally {
@@ -93,5 +86,5 @@ export function useConversationMessages(
     }
   }
 
-  return { messages, setMessages, hasNext, isLoading, status, error, loadMore }
+  return { messages, setMessages, hasNext, isLoading, error, loadMore }
 }

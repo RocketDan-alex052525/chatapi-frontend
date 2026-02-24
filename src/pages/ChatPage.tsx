@@ -95,7 +95,6 @@ export default function ChatPage() {
               status={chat.status}
               error={chat.error}
             />
-            {messageList.status && <p className="status-text ok">{messageList.status}</p>}
             {messageList.error && <p className="status-text error">{messageList.error}</p>}
           </div>
         </main>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { formatError } from '../../../shared/utils/formatError'
 import { createConversation, deleteConversation, getConversations } from '../api'
@@ -35,23 +35,24 @@ export function useConversationList(): UseConversationListResult {
   const [createLoading, setCreateLoading] = useState(false)
   const [createError, setCreateError] = useState('')
 
-  useEffect(() => {
-    async function loadInitial() {
-      setError('')
-      setIsLoading(true)
-      try {
-        const result = await getConversations()
-        setConversations(result.conversations)
-        setNextCursor(result.nextCursor)
-        setHasNext(result.hasNext)
-      } catch (err) {
-        setError(formatError(err))
-      } finally {
-        setIsLoading(false)
-      }
+  const refresh = useCallback(async () => {
+    setError('')
+    setIsLoading(true)
+    try {
+      const result = await getConversations()
+      setConversations(result.conversations)
+      setNextCursor(result.nextCursor)
+      setHasNext(result.hasNext)
+    } catch (err) {
+      setError(formatError(err))
+    } finally {
+      setIsLoading(false)
     }
-    loadInitial()
   }, [])
+
+  useEffect(() => {
+    refresh()
+  }, [refresh])
 
   async function loadMore() {
     if (!hasNext || isLoading) return
@@ -75,11 +76,11 @@ export function useConversationList(): UseConversationListResult {
     setDeleteLoadingId(targetId)
     try {
       await deleteConversation(targetId)
-      setConversations((prev) => prev.filter((item) => item.conversationId !== targetId))
-      setStatus('대화를 삭제했습니다.')
       if (activeConversationId === targetId) {
         navigate('/chat')
       }
+      await refresh()
+      setStatus('대화를 삭제했습니다.')
     } catch (err) {
       setDeleteError(formatError(err))
     } finally {
@@ -92,6 +93,7 @@ export function useConversationList(): UseConversationListResult {
     setCreateLoading(true)
     try {
       const result = await createConversation(title.trim() || '새 대화')
+      await refresh()
       navigate(`/chat/${result.conversationId}`)
       return true
     } catch (err) {
