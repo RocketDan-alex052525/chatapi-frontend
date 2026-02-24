@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { login, registerApiKey } from '../domains/auth'
 import { useAuth } from '../domains/auth'
 import { formatError } from '../shared/utils/formatError'
 
 export default function AuthPage() {
   const { auth, setAuth } = useAuth()
+  const navigate = useNavigate()
   const [apiKey, setApiKey] = useState('')
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
@@ -34,8 +36,7 @@ export default function AuthPage() {
     try {
       const result = await login(apiKey.trim())
       setAuth(result)
-      setStatus('로그인 완료')
-      setApiKey('')
+      navigate('/chat')
     } catch (err) {
       setError(formatError(err))
     } finally {
