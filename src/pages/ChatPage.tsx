@@ -38,7 +38,7 @@ export default function ChatPage() {
   }
 
   return (
-    <section className="panel">
+    <section className="panel panel--full-height">
       <div className="panel__title">채팅</div>
       <div className="chat-layout">
 

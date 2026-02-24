@@ -1,10 +1,11 @@
 .app {
   max-width: 1040px;
   margin: 0 auto;
-  padding: 40px 24px 80px;
+  padding: 40px 24px;
   display: flex;
   flex-direction: column;
   gap: 24px;
+  min-height: 100vh;
 }
 
 .app__header {
@@ -395,11 +396,19 @@ button.secondary {
   box-shadow: 0 0 0 3px rgba(216, 106, 63, 0.15);
 }
 
+/* Chat panel full-height stretch */
+.panel--full-height {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
 /* Chat two-column layout */
 .chat-layout {
   display: grid;
   grid-template-columns: 280px 1fr;
-  height: calc(100vh - 260px);
+  flex: 1;
   min-height: 520px;
   overflow: hidden;
 }
