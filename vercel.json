@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://chatapi-ktn8.onrender.com/$1"
+    }
+  ]
+}
