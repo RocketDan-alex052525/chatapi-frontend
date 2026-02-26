@@ -45,7 +45,6 @@ export function useChat(): UseChatResult {
           ...prev,
           { id: result.messageId, role: 'assistant', content: result.answer },
         ])
-        setStatus('응답 수신')
       } else {
         const streamMessageId = Date.now()
         setMessages((prev) => [...prev, { id: streamMessageId, role: 'assistant', content: '' }])
@@ -59,8 +58,6 @@ export function useChat(): UseChatResult {
             ),
           )
         }
-
-        setStatus('스트리밍 응답 완료')
       }
     } catch (err) {
       const errMsg = formatError(err)
