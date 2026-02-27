@@ -61,8 +61,10 @@ export function useChat(): UseChatResult {
       }
     } catch (err) {
       const errMsg = formatError(err)
-      setError(errMsg)
-      setMessages((prev) => [...prev, { role: 'assistant', content: `오류: ${errMsg}` }])
+      if (errMsg) {
+        setError(errMsg)
+        setMessages((prev) => [...prev, { role: 'assistant', content: `오류: ${errMsg}` }])
+      }
     } finally {
       setIsLoading(false)
     }

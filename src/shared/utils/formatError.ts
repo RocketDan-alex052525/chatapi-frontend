@@ -2,6 +2,7 @@ import { ApiError } from '../api/client'
 
 export function formatError(error: unknown): string {
   if (error instanceof ApiError) {
+    if (error.code === 'JWT0002') return ''
     const code = error.code ? ` (${error.code})` : ''
     return `${error.message}${code}`
   }
